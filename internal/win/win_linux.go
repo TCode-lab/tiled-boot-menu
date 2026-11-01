@@ -110,6 +110,9 @@ func MakeOverrideRedirect(w *gtk.Window) error {
 	if err != nil {
 		return fmt.Errorf("window: %w", err)
 	}
+	if !isX11Window(gw.Native()) {
+		return fmt.Errorf("override redirect requires an X11 window")
+	}
 	gw.SetOverrideRedirect(true)
 	return nil
 }

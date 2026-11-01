@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 gboolean boot_layer_supported(void);
+gboolean boot_window_is_x11(uintptr_t w);
 void boot_layer_init(uintptr_t w);
 void boot_focus(uintptr_t w);
 void boot_round_corners(uintptr_t w, int width, int height, int radius);

@@ -7,6 +7,11 @@ gboolean boot_layer_supported(void) {
 	return gtk_layer_is_supported();
 }
 
+gboolean boot_window_is_x11(uintptr_t raw) {
+	GdkWindow *w = (GdkWindow *)raw;
+	return w != NULL && GDK_IS_X11_WINDOW(w);
+}
+
 void boot_layer_init(uintptr_t raw) {
 	GtkWindow *w = (GtkWindow *)raw;
 	gtk_layer_init_for_window(w);
@@ -23,6 +28,9 @@ void boot_focus(uintptr_t raw) {
 
 void boot_round_corners(uintptr_t raw, int width, int height, int radius) {
 	GdkWindow *w = (GdkWindow *)raw;
+	if (!w || !GDK_IS_X11_WINDOW(w)) {
+		return;
+	}
 	cairo_surface_t *mask = cairo_image_surface_create(CAIRO_FORMAT_A1, width, height);
 	cairo_t *cr = cairo_create(mask);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
@@ -50,7 +58,11 @@ void boot_round_corners(uintptr_t raw, int width, int height, int radius) {
 static Display *catcher_dpy = NULL;
 static Window catcher_win = 0;
 
-int boot_create_catcher(uintptr_t launcher) {
+int boot_create_catcher(uintptr_t raw) {
+	GdkWindow *launcher = (GdkWindow *)raw;
+	if (!launcher || !GDK_IS_X11_WINDOW(launcher)) {
+		return 0;
+	}
 	catcher_dpy = XOpenDisplay(NULL);
 	if (!catcher_dpy) {
 		return 0;
@@ -65,7 +77,7 @@ int boot_create_catcher(uintptr_t launcher) {
 		0, 0, InputOnly, CopyFromParent,
 		CWOverrideRedirect | CWEventMask, &attrs);
 	XMapRaised(catcher_dpy, catcher_win);
-	XRaiseWindow(catcher_dpy, (Window)launcher);
+	XRaiseWindow(catcher_dpy, GDK_WINDOW_XID(launcher));
 	XFlush(catcher_dpy);
 	return 1;
 }
@@ -93,6 +105,9 @@ void boot_raise(uintptr_t raw) {
 
 void boot_x11_focus(uintptr_t raw) {
 	GdkWindow *w = (GdkWindow *)raw;
+	if (!w || !GDK_IS_X11_WINDOW(w)) {
+		return;
+	}
 	Display *dpy = GDK_WINDOW_XDISPLAY(w);
 	Window xid = GDK_WINDOW_XID(w);
 	XRaiseWindow(dpy, xid);

@@ -15,6 +15,8 @@ import (
 
 func layerShellSupported() bool { return C.boot_layer_supported() != 0 }
 
+func isX11Window(native uintptr) bool { return C.boot_window_is_x11(C.uintptr_t(native)) != 0 }
+
 func layerShellInit(native uintptr) {
 	C.boot_layer_init(C.uintptr_t(native))
 }
@@ -38,6 +40,9 @@ func raise(native uintptr) {
 func WatchOutsideClick(w *gtk.Window, onClick func()) {
 	gw, err := w.GetWindow()
 	if err != nil {
+		return
+	}
+	if !isX11Window(gw.Native()) {
 		return
 	}
 	if C.boot_create_catcher(C.uintptr_t(gw.Native())) == 0 {
